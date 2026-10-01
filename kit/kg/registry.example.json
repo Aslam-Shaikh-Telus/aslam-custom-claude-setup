@@ -1,0 +1,18 @@
+[
+    {
+        "name":  "my-project",
+        "path":  "C:\\GitHub\\my-project-kg",
+        "match":  "my-project|related-repo",
+        "index":  "index.md",
+        "shared":  true,
+        "branch":  "kg/<your-name>"
+    },
+    {
+        "name":  "local",
+        "path":  "C:\\GitHub\\local-kg",
+        "match":  ".",
+        "index":  "index.md",
+        "shared":  false,
+        "branch":  "main"
+    }
+]

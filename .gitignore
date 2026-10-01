@@ -1,0 +1,29 @@
+# Allowlist-style ignore: nothing that a Claude Code run produces at runtime is
+# ever committable from this repo. Runtime artifacts carry machine names, user
+# email addresses and mailbox contents that the source scripts deliberately avoid.
+
+# Runtime logs and queues
+*.log
+*.jsonl
+send.log
+last-*.json
+
+# Per-machine / per-person state that is regenerated, never shipped
+kit/kg/registry.json.local
+kit/hooks/personal-terms.local.json
+hooks/logs/
+alerts/queue/
+notify/state/
+
+# Dependencies
+node_modules/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local scan/export config (holds colleague names) and stray files
+tools/denylist.local.json
+*.stackdump
+backups/

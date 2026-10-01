@@ -1,0 +1,108 @@
+==============================================================
+SERVICENOW CHANGE REQUEST - DRAFT - NOT SUBMITTED
+<change title>
+Prepared <YYYY-MM-DD>
+Free-text CR fields and the six Risk Assessment answers.
+==============================================================
+########## PART A - STAGE CR ##########
+
+FIELD 01 - Short description                          [header]
+--------------------------------------------------------------
+<one line, at most 160 characters: what changes, on what. No environment name.>
+--------------------- end of field 01 ------------------------
+
+FIELD 02 - Description                                [header]
+--------------------------------------------------------------
+<what is changing and why it was required. Name the teams and systems involved. Facts the approver weighs, nothing else.>
+--------------------- end of field 02 ------------------------
+
+FIELD 03 - Justification                        [Planning tab]
+--------------------------------------------------------------
+<business and technical reason; why now.>
+--------------------- end of field 03 ------------------------
+
+FIELD 04 - Implementation plan                  [Planning tab]
+--------------------------------------------------------------
+1. <step>
+2. <step>
+Notification - before: <who, how>   after: <who, how>
+Total time required: <N minutes>
+--------------------- end of field 04 ------------------------
+
+FIELD 05 - Risk and impact analysis             [Planning tab]
+--------------------------------------------------------------
+If it fails: <...>
+If it does not proceed: <...>
+Downstream during execution: <...>
+Privacy / regulatory / security: <...>
+--------------------- end of field 05 ------------------------
+
+FIELD 06 - Backout plan                         [Planning tab]
+--------------------------------------------------------------
+1. <reversal step>
+2. <reversal step>
+Data reversal: <what happens to data, not just code>
+Teams required: <name each team or role>
+--------------------- end of field 06 ------------------------
+
+FIELD 07 - Backout duration                     [Planning tab]
+--------------------------------------------------------------
+Days: 0   Hours: 0   Minutes: <N>   Seconds: 0
+--------------------- end of field 07 ------------------------
+
+FIELD 08 - Test plan                            [Planning tab]
+--------------------------------------------------------------
+1. <test step, from the customer perspective>
+2. <end-to-end business transaction>
+Tester: <name or role>   Timing: <inside steps | deferred>
+Evidence stored at: <location>
+--------------------- end of field 08 ------------------------
+
+FIELD 09 - Outage / service impact              [Schedule tab]
+--------------------------------------------------------------
+<whether an outage is required, and what a user observes.>
+--------------------- end of field 09 ------------------------
+
+FIELD 10 - Conflicts                           [Conflicts tab]
+--------------------------------------------------------------
+>> AUTHOR ACTION - run the ServiceNow conflict checker.
+--------------------- end of field 10 ------------------------
+
+FIELD 11 - Related records              [Related Records tab]
+--------------------------------------------------------------
+>> AUTHOR ACTION - add related record references.
+--------------------- end of field 11 ------------------------
+
+RISK ASSESSMENT - PART A (STAGE)
+--------------------------------------------------------------
+Q1 Complexity           >> <verbatim option string>
+Q2 Customers affected   >> <verbatim option string>
+Q3 Impact to service    >> <verbatim option string>
+Q4 Peer review, testing >> <verbatim option string>
+Q5 Validation           >> <verbatim option string>
+Q6 Rollback             >> <verbatim option string>
+
+########## PART B - PROD CR ##########
+
+<the same 11 field blocks, then RISK ASSESSMENT - PART B (PROD). Answers recomputed; often differ on Q2 and Q3.>
+
+AUTHOR ACTIONS
+--------------------------------------------------------------
+  [ ] FIELD 10 - run the conflict checker
+  [ ] FIELD 11 - add related records if any
+  [ ] <anything else this draft could not determine>
+
+CONSISTENCY SELF-CHECK - DO NOT PASTE
+--------------------------------------------------------------
+PART A   Q1 <answer>
+         Q2 <answer>
+         Q3 <answer>
+         Q4 <answer>
+         Q5 <answer>
+         Q6 <answer>
+PART B   Q1 <answer>
+         Q2 <answer>
+         Q3 <answer>
+         Q4 <answer>
+         Q5 <answer>
+         Q6 <answer>

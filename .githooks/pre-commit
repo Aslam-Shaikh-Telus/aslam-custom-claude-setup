@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuse the commit if tools/scan.ps1 finds a denied term, a personal path or a secret.
+exec pwsh -NoProfile -File tools/scan.ps1

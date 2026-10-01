@@ -1,0 +1,9 @@
+{
+  "model": "sonnet",
+  "autoCompactEnabled": true,
+  "autoCompactWindow": "100k",
+  "cleanupPeriodDays": 90,
+  "env": {
+    "MY_OWN_VAR": "keep-me"
+  }
+}

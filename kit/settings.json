@@ -1,0 +1,119 @@
+{
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/id_rsa*)",
+      "Read(**/.credentials.json)"
+    ],
+    "defaultMode": "plan"
+  },
+  "model": "opusplan[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"<HOME>\\.claude\\kg\\kg-hook.ps1\"",
+            "timeout": 20,
+            "statusMessage": "Loading knowledge graph context"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\inject-plan-contract.js\"",
+            "timeout": 10,
+            "statusMessage": "Loading plan contract"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\guard-commands.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking command guardrails"
+          }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\plan-contract.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking plan contract"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*datadog.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\guard-datadog-writes.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking Datadog write guardrail"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\plan-accepted-jira.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking plan tracking requirements"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"<HOME>\\.claude\\hooks\\security-sinks.js\"",
+            "timeout": 10,
+            "statusMessage": "Checking for dangerous-API sinks"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"<HOME>\\.claude\\statusline\\statusline.js\""
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": false,
+    "code-simplifier@claude-plugins-official": false
+  },
+  "effortLevel": "high",
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 200000
+}

@@ -1,0 +1,46 @@
+{
+  "_about": "Maps kit/ paths to their live sources. tools/export.ps1 copies every `mirror` path from its source (default: ~/.claude/<path after kit/>; `sources` overrides), applies `substitutions` and the local replacements, scans, and only then writes kit/. `curated` paths are hand-maintained in this repo and never written by export. A trailing / marks a directory.",
+  "mirror": [
+    "kit/hooks/plan-contract.js",
+    "kit/hooks/inject-plan-contract.js",
+    "kit/hooks/plan-accepted-jira.js",
+    "kit/hooks/test-plan-contract.js",
+    "kit/hooks/test-inject-plan-contract.js",
+    "kit/hooks/guard-commands.js",
+    "kit/hooks/test-guard-commands.js",
+    "kit/hooks/security-sinks.js",
+    "kit/hooks/guard-datadog-writes.js",
+    "kit/hooks/test-guard-datadog-writes.js",
+    "kit/agents/Explore.md",
+    "kit/agents/locator.md",
+    "kit/agents/opus-consult.md",
+    "kit/agents/opus-step.md",
+    "kit/agents/scoped-reviewer.md",
+    "kit/skills/plan-progress-tracker/",
+    "kit/skills/troubleshooting/",
+    "kit/skills/code-craft/",
+    "kit/skills/documentation/",
+    "kit/skills/system-design/",
+    "kit/skills/tui-design/",
+    "kit/skills/cloud-iac-guardrails/",
+    "kit/skills/kg-update/",
+    "kit/skills/security-sinks/",
+    "kit/skills/servicenow-cr/",
+    "kit/commands/ans.md",
+    "kit/kg/kg-hook.ps1",
+    "kit/statusline/statusline.js"
+  ],
+  "sources": {
+    "kit/statusline/statusline.js": "C:\\GitHub\\claude-cost-guard\\statusline.js"
+  },
+  "curated": [
+    "kit/CLAUDE.md",
+    "kit/settings.json",
+    "kit/hooks/personal-terms.json",
+    "kit/kg/registry.example.json"
+  ],
+  "exclude": ["*.log", "*.bak", "*.jsonl", "__pycache__", "node_modules", "logs"],
+  "substitutions": [
+    { "from": "{HOME}", "to": "%USERPROFILE%" }
+  ]
+}

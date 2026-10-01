@@ -1,0 +1,207 @@
+{
+  "kitVersion": "0.2.0",
+  "_about": "Component catalogue read by INSTALL.ps1. One entry per adoptable unit, not per file. A 'files' value ending in '/' claims that directory and everything under it. Every path listed here is either mirrored from the author's live setup by tools/export.ps1 or hand-curated in this repo; tools/export.json says which.",
+  "tiers": ["core", "recommended", "advanced"],
+  "settingsSource": "kit/settings.json",
+  "_settingsSourceNote": "INSTALL.ps1 reads the actual values for every settingsKeys entry from this file. It is claimed by the manifest through this field rather than through any component's 'files' list, because settings.json is reconciled key by key and never copied as a file. Hook keys are not merged by INSTALL.ps1 yet - copy the hooks block from kit/settings.json by hand (see README.md).",
+  "components": [
+    {
+      "id": "base-settings",
+      "title": "Baseline settings (model, effort, compaction, permissions)",
+      "tier": "core",
+      "files": [],
+      "benefit": "The session-level defaults the rest of the kit assumes: plan mode by default so work starts with a plan rather than an edit, Opus for planning with a cheaper subagent floor, a deliberate auto-compaction window instead of an arbitrary one, and read denies for key and credential files. These are the cheapest wins in the kit.",
+      "cost": "These are preferences, not machinery - you may already have tuned them. Every key is offered one at a time against your current value, and keys you set that the kit does not mention are left alone. Proxy settings are not shipped; keep your own.",
+      "requires": [],
+      "settingsKeys": {
+        "permissions.defaultMode": "start every session in plan mode",
+        "permissions.deny": "never read .env, key, certificate or credential files",
+        "model": "main-thread model",
+        "effortLevel": "reasoning effort",
+        "env.CLAUDE_CODE_SUBAGENT_MODEL": "default model floor for subagents without their own model",
+        "autoCompactEnabled": "compact rather than truncate",
+        "autoCompactWindow": "compact at a deliberate point, not an arbitrary one"
+      },
+      "conflictPolicy": "merge-keys"
+    },
+    {
+      "id": "claude-md",
+      "title": "Behaviour contract (CLAUDE.md)",
+      "tier": "core",
+      "files": ["kit/CLAUDE.md"],
+      "benefit": "A single always-loaded file that sets how Claude works: ask before assuming, delegate reading to subagents, verification-first, minimal diffs, no emojis, explicit file placement rules. It is the highest-leverage single file in the kit - most of the other components only make sense once this is in place.",
+      "cost": "It is opinionated. Some rules (verification-first, one session per task) add real friction on small tasks. Treat it as a starting point to edit down, not a config to adopt whole.",
+      "requires": [],
+      "settingsKeys": {},
+      "conflictPolicy": "side-by-side"
+    },
+    {
+      "id": "plan-contract",
+      "title": "Plan quality gate",
+      "tier": "core",
+      "files": [
+        "kit/hooks/plan-contract.js",
+        "kit/hooks/inject-plan-contract.js",
+        "kit/hooks/plan-accepted-jira.js",
+        "kit/hooks/test-plan-contract.js",
+        "kit/hooks/test-inject-plan-contract.js",
+        "kit/skills/plan-progress-tracker/"
+      ],
+      "benefit": "Injects a plan contract into planning turns and gates ExitPlanMode against it, so a plan cannot be accepted until it names its decisions, ground truth, verification, escalation conditions, and what is out of scope. Asking politely in CLAUDE.md does not survive a long session; a hook does.",
+      "cost": "A hook that can block. A plan you consider good enough will occasionally be refused, and you fix the plan rather than the hook. plan-accepted-jira.js additionally prompts about a ticket on every accepted plan.",
+      "requires": ["claude-md"],
+      "settingsKeys": {
+        "hooks.UserPromptSubmit": "runs %USERPROFILE%\\.claude\\hooks\\inject-plan-contract.js",
+        "hooks.PreToolUse[ExitPlanMode]": "runs %USERPROFILE%\\.claude\\hooks\\plan-contract.js",
+        "hooks.PostToolUse[ExitPlanMode]": "runs %USERPROFILE%\\.claude\\hooks\\plan-accepted-jira.js"
+      },
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "guard-commands",
+      "title": "Destructive-command guard",
+      "tier": "core",
+      "files": [
+        "kit/hooks/guard-commands.js",
+        "kit/hooks/personal-terms.json",
+        "kit/hooks/test-guard-commands.js"
+      ],
+      "benefit": "A PreToolUse hook that denies the commands you cannot undo - force pushes, hard resets, prod and DR infrastructure changes from the wrong working directory - and asks before a commit to a shared knowledge graph that contains a secret or a term listed in personal-terms.json. Backed by a regression suite you can run yourself (node test-guard-commands.js).",
+      "cost": "It can deny a command you actually meant. Some rules key off the current working directory, so an unusual repo layout can produce a false positive. It also matches commit message prose, not just commands, which surprises people the first time. personal-terms.json ships empty - add your own colleagues' names to it.",
+      "requires": [],
+      "settingsKeys": {
+        "hooks.PreToolUse[Bash|PowerShell]": "runs %USERPROFILE%\\.claude\\hooks\\guard-commands.js"
+      },
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "agents",
+      "title": "Scoped subagents (Explore, locator, scoped-reviewer, opus-consult, opus-step)",
+      "tier": "recommended",
+      "files": [
+        "kit/agents/Explore.md",
+        "kit/agents/locator.md",
+        "kit/agents/opus-consult.md",
+        "kit/agents/opus-step.md",
+        "kit/agents/scoped-reviewer.md"
+      ],
+      "benefit": "Deliberately narrow agents. Explore and locator answer 'where does X live' with coordinates and conclusions, never file bodies. scoped-reviewer reviews a diff for correctness against stated requirements only, in a context that has not seen the reasoning that produced the change. opus-consult and opus-step let a cheaper executor hand one named judgement or step of an approved plan to Opus. All of them keep large file reads out of the main thread.",
+      "cost": "Their value comes from being narrow. Widening a description turns the agent into a generic one and it stops being worth invoking. opus-consult and opus-step only make sense alongside the plan-contract component.",
+      "requires": [],
+      "settingsKeys": {},
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "generic-skills",
+      "title": "General engineering skills",
+      "tier": "recommended",
+      "files": [
+        "kit/skills/troubleshooting/",
+        "kit/skills/code-craft/",
+        "kit/skills/documentation/",
+        "kit/skills/system-design/",
+        "kit/skills/tui-design/",
+        "kit/skills/cloud-iac-guardrails/"
+      ],
+      "benefit": "Task-shaped instructions that load only when the work matches, so none of them cost context on an unrelated turn. Covers bug investigation, authoring and restructuring code, docs, architecture, terminal UIs, and cloud/IaC guardrails.",
+      "cost": "Skills fire on a description match. If one loads when you did not want it, the fix is to narrow its description field - not to delete it.",
+      "requires": [],
+      "settingsKeys": {},
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "ans-command",
+      "title": "/ans slash command",
+      "tier": "recommended",
+      "files": ["kit/commands/ans.md"],
+      "benefit": "A typed command, so it fires only when you ask - unlike a skill, which fires on a description match.",
+      "cost": "None beyond one more file. Worth reading before use so you know what it does on your setup.",
+      "requires": [],
+      "settingsKeys": {},
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "kg-runner",
+      "title": "Knowledge-graph runner",
+      "tier": "advanced",
+      "files": [
+        "kit/kg/kg-hook.ps1",
+        "kit/kg/registry.example.json"
+      ],
+      "benefit": "A SessionStart hook that matches your working directory against a registry of knowledge-graph repos and loads the right one's index into context. Durable project facts live in a git repo next to the code instead of in a transcript that gets compacted away.",
+      "cost": "Real setup effort - a repo per project, a per-user branch, and a habit of writing to it. Copy registry.example.json to %USERPROFILE%\\.claude\\kg\\registry.json and fill in your own paths; a registry entry pointing at a repo with no remote fails quietly. Do not adopt this on day one.",
+      "requires": [],
+      "settingsKeys": {
+        "hooks.SessionStart": "runs %USERPROFILE%\\.claude\\kg\\kg-hook.ps1"
+      },
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "kg-update",
+      "title": "/kg-update skill",
+      "tier": "advanced",
+      "files": ["kit/skills/kg-update/"],
+      "benefit": "Writes session findings, decisions and incidents into the matching knowledge graph in the KG's own format, so recording knowledge is one command rather than a manual chore that gets skipped.",
+      "cost": "Useless without kg-runner and at least one registered store. It asks before writing anything that looks personal rather than blocking, so you still have to read what it proposes.",
+      "requires": ["kg-runner"],
+      "settingsKeys": {},
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "servicenow-cr",
+      "title": "ServiceNow / THFLOW change request skill",
+      "tier": "advanced",
+      "files": ["kit/skills/servicenow-cr/"],
+      "benefit": "Drafts a stage or production change request: fills the form fields, derives the risk assessment answers, and produces a submission that clears the quality bot first time. Useful to any engineer shipping to a controlled environment.",
+      "cost": "Its copy of the field definitions comes from the vendor-change-request-form repo, and the change windows stated there contradict the ones in change-windows.md. Confirm the current form against your own source before submitting - do not trust the skill's copy.",
+      "requires": [],
+      "settingsKeys": {},
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "security-sinks",
+      "title": "Security-sink reminder",
+      "tier": "recommended",
+      "files": [
+        "kit/hooks/security-sinks.js",
+        "kit/skills/security-sinks/"
+      ],
+      "benefit": "After an edit, the hook spots known dangerous-API sinks in JS/TS and Python (shell exec, eval, innerHTML, pickle, unsafe YAML and similar) with cheap regex checks and posts a reminder, so Claude checks the change before moving on. The security-sinks skill covers Terraform, Python, JS/TS and GitHub Actions in more depth.",
+      "cost": "Advisory only - it adds context after Edit/Write and never blocks. On a file full of legitimate sinks it repeats itself.",
+      "requires": [],
+      "settingsKeys": {
+        "hooks.PostToolUse[Edit|Write]": "runs %USERPROFILE%\\.claude\\hooks\\security-sinks.js"
+      },
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "datadog-guard",
+      "title": "Datadog MCP write guard",
+      "tier": "advanced",
+      "files": [
+        "kit/hooks/guard-datadog-writes.js",
+        "kit/hooks/test-guard-datadog-writes.js"
+      ],
+      "benefit": "Asks before any non-read call through the Datadog MCP server, so monitors and dashboards change through Terraform rather than a direct MCP write. The MCP role grants write access, so Datadog itself will not refuse.",
+      "cost": "Only useful if you run the Datadog MCP plugin. The prompt names the WSBC infrastructure repos; edit it if your Terraform lives elsewhere.",
+      "requires": [],
+      "settingsKeys": {
+        "hooks.PreToolUse[mcp__.*datadog.*]": "runs %USERPROFILE%\\.claude\\hooks\\guard-datadog-writes.js"
+      },
+      "conflictPolicy": "file-copy"
+    },
+    {
+      "id": "statusline",
+      "title": "Cost and context statusline",
+      "tier": "recommended",
+      "files": ["kit/statusline/statusline.js"],
+      "benefit": "Shows context %, quota % and session cost on screen, so you act on a long session before it gets expensive.",
+      "cost": "Needs Node on PATH. Copy it to %USERPROFILE%\\.claude\\statusline\\statusline.js; the statusLine key in kit/settings.json points there.",
+      "requires": [],
+      "settingsKeys": {
+        "statusLine": "runs node %USERPROFILE%\\.claude\\statusline\\statusline.js"
+      },
+      "conflictPolicy": "file-copy"
+    }
+  ]
+}
