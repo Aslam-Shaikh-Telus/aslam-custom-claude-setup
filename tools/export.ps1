@@ -67,6 +67,19 @@ function Test-Excluded([IO.FileSystemInfo] $item, [string] $baseDir) {
     $false
 }
 
+function Test-Bom([string] $path) {
+    $b = [IO.File]::ReadAllBytes($path)
+    $b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF
+}
+
+# Hash of the content with line endings normalised, so a CRLF checkout of an LF file
+# is not drift. A BOM still counts: PowerShell 5.1 reads a BOM-less script as ANSI.
+function Get-TextHash([string] $path) {
+    $text = [IO.File]::ReadAllText($path).Replace("`r`n", "`n")
+    $bytes = [Text.Encoding]::UTF8.GetBytes("$(Test-Bom $path)|$text")
+    [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
+}
+
 try {
     foreach ($e in $entries) {
         $dest = Join-Path $stage ($e.KitPath.TrimEnd('/') -replace '/', '\')
@@ -104,14 +117,16 @@ try {
     foreach ($f in Get-ChildItem -LiteralPath $stage -Recurse -File) {
         $kitRel = [IO.Path]::GetRelativePath($stage, $f.FullName) -replace '\\', '/'
         $text = [IO.File]::ReadAllText($f.FullName)
-        $new = $text
+        # kit/ is always LF. Live sources mix LF and CRLF, and git's autocrlf rewrites
+        # endings on checkout anyway, so endings carry no meaning here.
+        $new = $text.Replace("`r`n", "`n")
         foreach ($p in $pairs) {
             $new = [regex]::Replace($new, [regex]::Escape($p[0]), $p[1].Replace('$', '$$'), 'IgnoreCase')
         }
         foreach ($r in $replacements) {
             if ($r -and $r.file -eq $kitRel) { $new = $new.Replace($r.from, $r.to) }
         }
-        if ($new -ne $text) { [IO.File]::WriteAllText($f.FullName, $new, [Text.UTF8Encoding]::new($false)) }
+        if ($new -ne $text) { [IO.File]::WriteAllText($f.FullName, $new, [Text.UTF8Encoding]::new((Test-Bom $f.FullName))) }
     }
 
     # --- Scan -----------------------------------------------------------------------
@@ -129,8 +144,8 @@ try {
         $kit    = Join-Path $repo $rel
         $a = if (Test-Path $staged) { Get-ChildItem -LiteralPath $staged -Recurse -File -Force } else { @() }
         $b = if (Test-Path $kit)    { Get-ChildItem -LiteralPath $kit    -Recurse -File -Force } else { @() }
-        $hashA = @{}; foreach ($x in $a) { $hashA[[IO.Path]::GetRelativePath($stage, $x.FullName)] = (Get-FileHash $x.FullName).Hash }
-        $hashB = @{}; foreach ($x in $b) { $hashB[[IO.Path]::GetRelativePath($repo,  $x.FullName)] = (Get-FileHash $x.FullName).Hash }
+        $hashA = @{}; foreach ($x in $a) { $hashA[[IO.Path]::GetRelativePath($stage, $x.FullName)] = Get-TextHash $x.FullName }
+        $hashB = @{}; foreach ($x in $b) { $hashB[[IO.Path]::GetRelativePath($repo,  $x.FullName)] = Get-TextHash $x.FullName }
         foreach ($k in $hashA.Keys) { if ($hashB[$k] -ne $hashA[$k]) { $drift.Add($k) } }
         foreach ($k in $hashB.Keys) { if (-not $hashA.ContainsKey($k)) { $drift.Add("$k (deleted upstream)") } }
     }

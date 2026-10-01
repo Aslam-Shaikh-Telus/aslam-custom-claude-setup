@@ -1,0 +1,2 @@
+# The pre-commit hook is a sh script; a CRLF checkout (core.autocrlf=true) breaks it.
+.githooks/* text eol=lf

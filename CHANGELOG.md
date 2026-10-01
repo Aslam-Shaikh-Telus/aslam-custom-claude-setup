@@ -28,5 +28,10 @@ Installer: fixed a StrictMode crash in `INSTALL.ps1 -Report` ("property 'Count'
 cannot be found") when a settings-key filter returned a single result; `base-settings` now offers only keys that
 `kit/settings.json` actually ships.
 
+Line endings: `kit/` is always LF, and `export.ps1 -Check` ignores CRLF vs
+LF, so a checkout with `core.autocrlf=true` no longer reports drift.
+`.gitattributes` pins `.githooks/*` to LF so the sh pre-commit hook still runs
+on such a checkout.
+
 Action after pull: none (first install). Hooks still need a manual merge into
 `settings.json`; see README step 3.
